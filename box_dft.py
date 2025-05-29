@@ -1,6 +1,15 @@
 
 import numpy as np
 
+def _integrate(values: np.ndarray, dx: float, dy: float = None, dz: float = None) -> float:
+    if dy is None:
+        dy = dx
+    if dz is None:
+        dz = dx
+    dV = dx * dy * dz
+    # potential snag: floating point precision depends on order of sum and multiplication,
+    # but so does performance, slightly
+    return np.sum(values) * dV
 
 
 def kinetic_energy(density: np.ndarray) -> float:
