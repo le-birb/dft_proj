@@ -44,7 +44,7 @@ if __name__ == "__main__":
         energy_gradient = ke_gradient(density) + hartree_gradient(density) + xc_gradient(density)
 
         # nudge in that direction
-        density += energy_gradient * gradient_scale
+        density -= energy_gradient * gradient_scale
         # repeat
     
     print(energy)
