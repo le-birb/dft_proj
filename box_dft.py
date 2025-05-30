@@ -11,6 +11,24 @@ def _integrate(values: np.ndarray, dx: float, dy: float = None, dz: float = None
     # but so does performance, slightly
     return np.sum(values) * dV
 
+def _grad_squared(function: np.ndarray, dx: float, dy: float = None, dz: float = None) -> np.ndarray:
+    '''returns (∇f)^2, using a symmetric difference quotient
+    dx should be the spacing between adjacent grid points'''
+    if dy is None:
+        dy = dx
+    if dz is None:
+        dz = dx
+    
+    grad_squared = np.zeros_like(function)
+    it = np.nditer(function, flags=['multi_index'])
+    # a symmetric differnence doesn't use the value at the point, so we don't actually need to keep it
+    for _ in it:
+        ix, iy, iz = it.multi_index
+        gx = (function[ix + 1, iy, iz] - function[ix - 1, iy, iz]) / (2*dx)
+        gy = (function[ix, iy + 1, iz] - function[ix, iy - 1, iz]) / (2*dy)
+        gz = (function[ix, iy, iz + 1] - function[ix, iy, iz - 1]) / (2*dz)
+        grad_squared[ix, iy, iz] = gx**2 + gy**2 + gz**2
+    return grad_squared	
 
 def kinetic_energy(density: np.ndarray) -> float:
     return 0
