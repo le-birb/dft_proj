@@ -30,8 +30,13 @@ def _grad_squared(function: np.ndarray, dx: float, dy: float = None, dz: float =
         grad_squared[ix, iy, iz] = gx**2 + gy**2 + gz**2
     return grad_squared	
 
-def kinetic_energy(density: np.ndarray) -> float:
-    return 0
+_tf_factor = 3/10 * (3*np.pi**2)**(2/3)
+_vw_factor = 1/8
+
+def kinetic_energy(density: np.ndarray, dx: float) -> float:
+    TF = np.power(density, 5/3)
+    VW = _grad_squared(density)/density
+    return _tf_factor * _integrate(TF, dx) + _vw_factor * _integrate(VW, dx)
 
 def ke_gradient(density: np.ndarray) -> np.ndarray:
     return np.zeros(density.shape)
@@ -66,7 +71,7 @@ if __name__ == "__main__":
     while True:
         previous_energy = energy
         # calculate energy of configuration
-        energy = kinetic_energy(density) + hartree_energy(density) + xc_energy(density)
+        energy = kinetic_energy(density, dx) + hartree_energy(density) + xc_energy(density)
 
         # check convergence
         if abs(previous_energy - energy) < energy_tolerance:
