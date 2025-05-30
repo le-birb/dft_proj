@@ -54,9 +54,14 @@ gradient_scale = .1
 
 if __name__ == "__main__":
     box_dims = np.array([8.0, 4.0, 1.0]) # angstroms
-    resolution = 20 # points per anstrom
-    density = np.ones(resolution*box_dims)
+    points_per_angstrom = 20 # points per anstrom
+    electron_count = 8
+    density = np.ones(points_per_angstrom*box_dims)
     # fill in density with appropriate guess (uniform?)
+    box_volume = np.prod(box_dims)
+    density *= electron_count/box_volume
+
+    dx = 1/points_per_angstrom
 
     while True:
         previous_energy = energy
