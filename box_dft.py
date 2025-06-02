@@ -112,7 +112,7 @@ _a0 = .529 # angstroms
 def xc_energy(density: np.ndarray, dx: float) -> float:
     a = (np.log(2) - 1)/(2*np.pi**2)
     b = 20.4562557
-    rs_factor = _a0 * (4*np.pi/3)**(1/3)
+    rs_factor = (4*np.pi/3)**(1/3) / _a0
     integrand = _lda_factor * density**(4/3) + density * a * np.log(1 + b * rs_factor * density**(-1/3) + b * rs_factor**2 * density**(-2/3))
     return _integrate(integrand)
 
