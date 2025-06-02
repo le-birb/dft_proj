@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     dx = 1/points_per_angstrom
 
-    while True:
+    for _ in range(10):
         previous_energy = energy
         # calculate energy of configuration
         energy = kinetic_energy(density, dx) + hartree_energy(density) + xc_energy(density)
