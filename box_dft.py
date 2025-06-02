@@ -65,7 +65,7 @@ def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
 def hartree_energy(density: np.ndarray, dx: float) -> float:
     return 0
 
-def hartree_gradient(density: np.ndarray) -> np.ndarray:
+def hartree_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     return np.zeros(density.shape)
 
 _lda_factor = -3/4*(3/np.pi)**(1/3)
