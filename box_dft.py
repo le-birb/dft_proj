@@ -1,4 +1,5 @@
 
+from functools import lru_cache
 import numpy as np
 
 def _integrate(values: np.ndarray, dx: float, dy: float = None, dz: float = None) -> float:
@@ -62,8 +63,40 @@ def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     vw_term = _grad_squared(density, dx) / (8 * density**2) - _laplacian(density, dx) / (4 * density)
     return tf_term + vw_term
 
+# this should always be the same for a given calculation
+@lru_cache
+def _delta_r_base(shape: tuple[int, ...],  dx: float) -> np.ndarray:
+    grid = np.zeros(shape)
+    it = np.nditer(grid, flags=['multi_index'])
+    for _ in it:
+        xp, yp = it.multi_index
+        grid[xp, yp] = 1/np.abs((xp)**2 + (yp)**2)
+    grid[0,0] = 0
+    return grid / dx
+
+def _inv_delta_r(shape: tuple[int, ...], ri: tuple[int, int, int], dx: float) -> np.ndarray:
+    base = _delta_r_base(shape, dx)
+    xi, yi, zi = ri
+    translated_grid = np.zeros_like(base)
+    # the precalcualted distances may simply be copied into place
+    translated_grid[xi:, yi:, zi:] = base[:-xi,    :-yi,    :-zi   ]
+    translated_grid[:xi, yi:, zi:] = base[xi:0:-1, :-yi,    :-zi   ]
+    translated_grid[xi:, :yi, zi:] = base[:-xi,    yi:0:-1, :-zi   ]
+    translated_grid[:xi, :yi, zi:] = base[xi:0:-1, yi:0:-1, :-zi   ]
+    translated_grid[xi:, yi:, :zi] = base[:-xi,    :-yi,    zi:0:-1]
+    translated_grid[:xi, yi:, :zi] = base[xi:0:-1, :-yi,    zi:0:-1]
+    translated_grid[xi:, :yi, :zi] = base[:-xi,    yi:0:-1, zi:0:-1]
+    translated_grid[:xi, :yi, :zi] = base[xi:0:-1, yi:0:-1, zi:0:-1]
+
+    return translated_grid
+
 def hartree_energy(density: np.ndarray, dx: float) -> float:
-    return 0
+    integrand = np.zeros_like(density)
+    it = np.nditer(density, flags=['multi_index'])
+    for dens_at_r in it:
+        ri = it.multi_index
+        integrand[ri] = dens_at_r * _integrate(density * _inv_delta_r(density.shape, ri, dx), dx)
+    return _integrate(integrand, dx)
 
 def hartree_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     return np.zeros(density.shape)
