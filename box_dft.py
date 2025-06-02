@@ -62,7 +62,7 @@ def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     vw_term = _grad_squared(density, dx) / (8 * density**2) - _laplacian(density, dx) / (4 * density)
     return tf_term + vw_term
 
-def hartree_energy(density: np.ndarray) -> float:
+def hartree_energy(density: np.ndarray, dx: float) -> float:
     return 0
 
 def hartree_gradient(density: np.ndarray) -> np.ndarray:
@@ -70,14 +70,14 @@ def hartree_gradient(density: np.ndarray) -> np.ndarray:
 
 _lda_factor = -3/4*(3/np.pi)**(1/3)
 
-def xc_energy(density: np.ndarray) -> float:
+def xc_energy(density: np.ndarray, dx: float) -> float:
     a = (np.log(2) - 1)/(2*np.pi**2)
     b = 20.4562557
     rs_factor = (4*np.pi/3)**(1/3)
     integrand = _lda_factor * density**(4/3) + density * a * np.log(1 + rs_factor * density**(-1/3) + rs_factor**2 * density**(-2/3))
     return _integrate(integrand)
 
-def xc_gradient(density: np.ndarray) -> np.ndarray:
+def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     return np.zeros(density.shape)
 
 energy = np.infty
