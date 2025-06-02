@@ -101,7 +101,7 @@ def hartree_energy(density: np.ndarray, dx: float) -> float:
 def hartree_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     gradient = np.zeros_like(density)
     it = np.nditer(density, flags=['multi_index'])
-    for dens_at_r in it:
+    for _ in it:
         ri = it.multi_index
         gradient[ri] = _integrate(density * _inv_delta_r(density.shape, ri, dx), dx)
     return .5 * gradient
