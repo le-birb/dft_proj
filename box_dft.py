@@ -57,8 +57,10 @@ def kinetic_energy(density: np.ndarray, dx: float) -> float:
     VW = _grad_squared(density)/density
     return _tf_factor * _integrate(TF, dx) + _vw_factor * _integrate(VW, dx)
 
-def ke_gradient(density: np.ndarray) -> np.ndarray:
-    return np.zeros(density.shape)
+def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
+    tf_term = 5/3 * density**(2/3)
+    vw_term = _grad_squared(density, dx) / (8 * density**2) - _laplacian(density, dx) / (4 * density)
+    return tf_term + vw_term
 
 def hartree_energy(density: np.ndarray) -> float:
     return 0
