@@ -96,9 +96,10 @@ def hartree_energy(density: np.ndarray, dx: float) -> float:
     for dens_at_r in it:
         ri = it.multi_index
         integrand[ri] = dens_at_r * _integrate(density * _inv_delta_r(density.shape, ri, dx), dx)
-    return _integrate(integrand, dx)
+    return .5 * _integrate(integrand, dx)
 
 def hartree_gradient(density: np.ndarray, dx: float) -> np.ndarray:
+
     return np.zeros(density.shape)
 
 _lda_factor = -3/4*(3/np.pi)**(1/3)
