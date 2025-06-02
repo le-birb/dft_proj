@@ -47,6 +47,8 @@ def hartree_energy(density: np.ndarray) -> float:
 def hartree_gradient(density: np.ndarray) -> np.ndarray:
     return np.zeros(density.shape)
 
+_lda_factor = -3/4*(3/np.pi)**(1/3)
+
 def xc_energy(density: np.ndarray) -> float:
     a = (np.log(2) - 1)/(2*np.pi**2)
     b = 20.4562557
