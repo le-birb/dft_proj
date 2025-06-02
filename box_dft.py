@@ -108,17 +108,23 @@ def hartree_gradient(density: np.ndarray, dx: float) -> np.ndarray:
 
 _lda_factor = -3/4*(3/np.pi)**(1/3)
 _a0 = .529 # angstroms
+_a = (np.log(2) - 1)/(2*np.pi**2)
+_b = 20.4562557
+_inv_rs_factor = (4*np.pi/3)**(1/3) / _a0
 
 def xc_energy(density: np.ndarray, dx: float) -> float:
-    a = (np.log(2) - 1)/(2*np.pi**2)
-    b = 20.4562557
-    inv_rs_factor = (4*np.pi/3)**(1/3) / _a0
-    inv_rs = density**2 * inv_rs_factor
-    integrand = _lda_factor * density**(4/3) + density * a * np.log(1 + b * (inv_rs + inv_rs**2))
+    inv_rs = density**2 * _inv_rs_factor
+    integrand = _lda_factor * density**(4/3) + density * _a * np.log(1 + _b * (inv_rs + inv_rs**2))
     return _integrate(integrand, dx)
 
 def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
-    return np.zeros(density.shape)
+    cbrt_dens = density**(1/3)
+    x_gradient = _lda_factor * 4/3 * cbrt_dens
+    inv_rs = _inv_rs_factor * cbrt_dens
+    eps_c = _a * np.log(1 + _b * (inv_rs + inv_rs**2))
+    one_plus_inv_rs = 1 + inv_rs
+    d_eps_c_drho = _a*_b/3 * one_plus_inv_rs/(1 + _b*inv_rs*one_plus_inv_rs)
+    return x_gradient + eps_c + density * d_eps_c_drho
 
 energy = np.infty
 energy_tolerance = 1e-6 # or whatever
