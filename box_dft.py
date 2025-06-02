@@ -30,6 +30,25 @@ def _grad_squared(function: np.ndarray, dx: float, dy: float = None, dz: float =
         grad_squared[ix, iy, iz] = gx**2 + gy**2 + gz**2
     return grad_squared	
 
+def _laplacian(function: np.ndarray, dx: float, dy: float = None, dz: float = None) -> np.ndarray:
+    # if dy is None:
+    #     dy = dx
+    # if dz is None:
+    #     dz = dx
+
+    laplacian = np.zeros_like(function)
+    it = np.nditer(function, flags=['multi_index'])
+    for value in it:
+        ix, iy, iz = it.multi_index
+        laplacian[ix, iy, iz] = \
+            (
+                function[ix + 1, iy, iz] + function[ix - 1, iy, iz] + \
+                function[ix, iy + 1, iz] + function[ix, iy - 1, iz] + \
+                function[ix, iy, iz + 1] + function[ix, iy, iz - 1] - \
+                6*value
+            ) / dx**2 # TODO: think about adding support for different dx, dy, dz; think about it real hard
+    return laplacian
+
 _tf_factor = 3/10 * (3*np.pi**2)**(2/3)
 _vw_factor = 1/8
 
