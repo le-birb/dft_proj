@@ -28,8 +28,8 @@ def _grad_squared(function: np.ndarray, dx: float, dy: float = None, dz: float =
         lx, ly, lz = function.shape
         # i + 1 needs to be wrapped around explicitly, i- 1 does not
         gx = (function[(ix + 1) % lx, iy, iz] - function[ix - 1, iy, iz]) / (2*dx)
-        gy = (function[ix, (iy + 1 % ly), iz] - function[ix, iy - 1, iz]) / (2*dy)
-        gz = (function[ix, iy, (iz + 1)] % lz - function[ix, iy, iz - 1]) / (2*dz)
+        gy = (function[ix, (iy + 1) % ly, iz] - function[ix, iy - 1, iz]) / (2*dy)
+        gz = (function[ix, iy, (iz + 1) % lz] - function[ix, iy, iz - 1]) / (2*dz)
         grad_squared[ix, iy, iz] = gx**2 + gy**2 + gz**2
     return grad_squared	
 
@@ -46,7 +46,7 @@ def _laplacian(function: np.ndarray, dx: float, dy: float = None, dz: float = No
         lx, ly, lz = function.shape
         laplacian[ix, iy, iz] = \
             (
-                function[(ix + 1 % lx), iy, iz] + function[ix - 1, iy, iz] + \
+                function[(ix + 1) % lx, iy, iz] + function[ix - 1, iy, iz] + \
                 function[ix, (iy + 1) % ly, iz] + function[ix, iy - 1, iz] + \
                 function[ix, iy, (iz + 1) % lz] + function[ix, iy, iz - 1] - \
                 6*value
