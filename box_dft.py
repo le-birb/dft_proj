@@ -80,15 +80,16 @@ def _delta_r_base(shape: tuple[int, ...],  dx: float) -> np.ndarray:
 def _inv_delta_r(shape: tuple[int, ...], ri: tuple[int, int, int], dx: float) -> np.ndarray:
     base = _delta_r_base(shape, dx)
     xi, yi, zi = ri
+    lx, ly, lz = shape
     translated_grid = np.zeros_like(base)
     # the precalcualted distances may simply be copied into place
-    translated_grid[xi:, yi:, zi:] = base[:-xi,    :-yi,    :-zi   ]
-    translated_grid[:xi, yi:, zi:] = base[xi:0:-1, :-yi,    :-zi   ]
-    translated_grid[xi:, :yi, zi:] = base[:-xi,    yi:0:-1, :-zi   ]
-    translated_grid[:xi, :yi, zi:] = base[xi:0:-1, yi:0:-1, :-zi   ]
-    translated_grid[xi:, yi:, :zi] = base[:-xi,    :-yi,    zi:0:-1]
-    translated_grid[:xi, yi:, :zi] = base[xi:0:-1, :-yi,    zi:0:-1]
-    translated_grid[xi:, :yi, :zi] = base[:-xi,    yi:0:-1, zi:0:-1]
+    translated_grid[xi:, yi:, zi:] = base[:lx-xi,  :ly-yi,  :lz-zi ]
+    translated_grid[:xi, yi:, zi:] = base[xi:0:-1, :ly-yi,  :lz-zi ]
+    translated_grid[xi:, :yi, zi:] = base[:lx-xi,  yi:0:-1, :lz-zi ]
+    translated_grid[:xi, :yi, zi:] = base[xi:0:-1, yi:0:-1, :lz-zi ]
+    translated_grid[xi:, yi:, :zi] = base[:lx-xi,  :ly-yi,  zi:0:-1]
+    translated_grid[:xi, yi:, :zi] = base[xi:0:-1, :ly-yi,  zi:0:-1]
+    translated_grid[xi:, :yi, :zi] = base[:lx-xi,  yi:0:-1, zi:0:-1]
     translated_grid[:xi, :yi, :zi] = base[xi:0:-1, yi:0:-1, zi:0:-1]
 
     return translated_grid
