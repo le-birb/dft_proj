@@ -147,14 +147,14 @@ if __name__ == "__main__":
     for _ in range(10):
         previous_energy = energy
         # calculate energy of configuration
-        energy = kinetic_energy(density, dx) + hartree_energy(density) + xc_energy(density)
+        energy = kinetic_energy(density, dx) + hartree_energy(density, dx) + xc_energy(density, dx)
 
         # check convergence
         if abs(previous_energy - energy) < energy_tolerance:
             break # converged
 
         # calculate gradient
-        energy_gradient = ke_gradient(density) + hartree_gradient(density) + xc_gradient(density)
+        energy_gradient = ke_gradient(density, dx) + hartree_gradient(density, dx) + xc_gradient(density, dx)
 
         # nudge in that direction
         density -= energy_gradient * gradient_scale
