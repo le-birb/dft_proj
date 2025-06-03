@@ -55,7 +55,7 @@ _vw_factor = 1/8
 
 def kinetic_energy(density: np.ndarray, dx: float) -> float:
     TF = np.power(density, 5/3)
-    VW = _grad_squared(density)/density
+    VW = _grad_squared(density, dx)/density
     return _tf_factor * _integrate(TF, dx) + _vw_factor * _integrate(VW, dx)
 
 def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
