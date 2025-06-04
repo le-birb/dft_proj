@@ -73,7 +73,7 @@ def _delta_r_base(shape: tuple[int, ...],  dx: float) -> np.ndarray:
     it = np.nditer(grid, flags=['multi_index'])
     for _ in it:
         xp, yp, zp = it.multi_index
-        grid[xp, yp, zp] = 1/np.abs((xp)**2 + (yp)**2)
+        grid[xp, yp, zp] = 1/np.abs(xp**2 + yp**2 + zp**2)
     grid[0,0,0] = 0
     return grid / dx
 
