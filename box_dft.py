@@ -73,7 +73,7 @@ def _delta_r_base(shape: tuple[int, ...],  dx: float) -> np.ndarray:
     it = np.nditer(grid, flags=['multi_index'])
     for _ in it:
         xp, yp, zp = it.multi_index
-        grid[xp, yp, zp] = 1/np.abs((xp)**2 + (yp)**2)
+        grid[xp, yp, zp] = 1/np.abs(xp**2 + yp**2 + zp**2)
     grid[0,0,0] = 0
     return grid / dx
 
@@ -131,12 +131,12 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     return x_gradient + eps_c + density * d_eps_c_drho
 
 energy = np.infty
-energy_tolerance = 1e-6 # or whatever
-gradient_scale = .1
+energy_tolerance = 1e-3 # or whatever
+gradient_scale = 1
 
 if __name__ == "__main__":
     box_dims = np.array([8.0, 4.0, 1.0]) # angstroms
-    points_per_angstrom = 20 # points per anstrom
+    points_per_angstrom = 10 # points per anstrom
     electron_count = 8
     density = np.ones((points_per_angstrom*box_dims).astype(np.int_)) # future-proofing would do some checks here
     # fill in density with appropriate guess (uniform?)
@@ -145,10 +145,12 @@ if __name__ == "__main__":
 
     dx = 1/points_per_angstrom
 
-    for _ in range(10):
+    for i in range(20):
+        print(f"Beginning iteration {i}")
         previous_energy = energy
         # calculate energy of configuration
         energy = kinetic_energy(density, dx) + hartree_energy(density, dx) + xc_energy(density, dx)
+        print(energy)
 
         # check convergence
         if abs(previous_energy - energy) < energy_tolerance:
@@ -161,4 +163,4 @@ if __name__ == "__main__":
         density -= energy_gradient * gradient_scale
         # repeat
     
-    print(energy)
+    print(f"final result:{energy}")
