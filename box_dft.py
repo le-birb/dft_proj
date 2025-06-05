@@ -126,8 +126,7 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     x_gradient = _lda_factor * 4/3 * cbrt_dens
     inv_rs = _inv_rs_factor * cbrt_dens
     eps_c = _a * np.log(1 + _b * (inv_rs + inv_rs**2))
-    one_plus_inv_rs = 1 + inv_rs
-    d_eps_c_drho = _a*_b*_inv_rs_factor**3/3 * inv_rs**-2 * one_plus_inv_rs/(1 + _b*inv_rs*one_plus_inv_rs)
+    d_eps_c_drho = _a*_b*_inv_rs_factor**3/3 * inv_rs**-2 * (1 + 2*inv_rs)/(1 + _b*inv_rs*(1 + inv_rs))
     return x_gradient + eps_c + density * d_eps_c_drho
 
 energy = np.inf
