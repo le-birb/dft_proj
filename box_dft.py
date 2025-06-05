@@ -130,7 +130,7 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     d_eps_c_drho = _a*_b*_inv_rs_factor**3/3 * inv_rs**-2 * one_plus_inv_rs/(1 + _b*inv_rs*one_plus_inv_rs)
     return x_gradient + eps_c + density * d_eps_c_drho
 
-energy = np.infty
+energy = np.inf
 energy_tolerance = 1e-3 # or whatever
 gradient_scale = 1
 
