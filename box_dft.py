@@ -133,6 +133,8 @@ energy = np.inf
 energy_tolerance = 1e-3 # or whatever
 gradient_scale = 1
 
+new_density_frac = .1
+
 if __name__ == "__main__":
     box_dims = np.array([16.0, 8.0, 2.0]) # bohr
     points_per_angstrom = 5
@@ -159,7 +161,7 @@ if __name__ == "__main__":
         energy_gradient = ke_gradient(density, dx) + hartree_gradient(density, dx) + xc_gradient(density, dx)
 
         # nudge in that direction
-        density -= energy_gradient * gradient_scale
-        # repeat
+        new_density = density - energy_gradient * gradient_scale
+        density = density*(1-new_density_frac) + new_density*new_density_frac
     
     print(f"final result:{energy}")
