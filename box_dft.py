@@ -134,9 +134,9 @@ energy_tolerance = 1e-3 # or whatever
 gradient_scale = 1
 
 if __name__ == "__main__":
-    box_dims = np.array([8.0, 4.0, 1.0]) # angstroms
-    points_per_angstrom = 10 # points per anstrom
-    electron_count = 8
+    box_dims = np.array([16.0, 8.0, 2.0]) # bohr
+    points_per_angstrom = 5
+    electron_count = 14
     density = np.ones((points_per_angstrom*box_dims).astype(np.int_)) # future-proofing would do some checks here
     # fill in density with appropriate guess (uniform?)
     box_volume = np.prod(box_dims)
