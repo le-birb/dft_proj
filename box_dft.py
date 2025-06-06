@@ -129,6 +129,54 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     d_eps_c_drho = _a*_b*_inv_rs_factor**3/3 * inv_rs**-2 * (1 + 2*inv_rs)/(1 + _b*inv_rs*(1 + inv_rs))
     return x_gradient + eps_c + density * d_eps_c_drho
 
+
+def _initial_density(shape: tuple[int, int, int], dx: float, electron_count: int) -> np.ndarray:
+    # noninteracting pib states are sqrt(2/Lx) sin(n pi x / Lx) in each direction
+    # shift everything over by dx/2 to be in the centers of the grid cells instead of the corners
+    x_centers = np.arange(shape[0]) * dx + dx/2
+    y_centers = np.arange(shape[1]) * dx + dx/2
+    z_centers = np.arange(shape[2]) * dx + dx/2
+    Lx = shape[0] * dx
+    Ly = shape[1] * dx
+    Lz = shape[2] * dx
+
+    def pib_energy(nx, ny, nz):
+        return (nx/Lx)**2 + (ny/Ly)**2 + (nz/Lz)**2
+
+    state_candidates = [(1, 1, 1)]
+    old_states = set()
+    density = np.zeros(shape)
+    electrons_left = electron_count
+    # the wavefunction norm factor is the sqrt of this, but we want a density
+    normalization_factor = 8/(Lx*Ly*Lz)
+
+    while electrons_left > 0:
+        electrons_in_next_state = min(electrons_left, 2)
+        electrons_left -= electrons_in_next_state
+
+        nx, ny, nz = state_candidates.pop(0)
+        old_states.add((nx, ny, nz))
+        print(f"{nx}, {ny}, {nz}; {pib_energy(nx, ny, nz)}")
+        print(old_states)
+        x_axis = np.sin(nx*np.pi*x_centers/Lx)**2
+        y_axis = np.sin(ny*np.pi*y_centers/Ly)**2
+        z_axis = np.sin(nz*np.pi*z_centers/Lz)**2
+        
+        density += electrons_in_next_state * normalization_factor * np.einsum('i,j,k', x_axis, y_axis, z_axis) # this einsum builds a 3d grid out of the axes in the way we want
+        
+        # the next highest energy state is either already present in the list, or is one of these
+        if (nx + 1, ny, nz) not in old_states and (nx + 1, ny, nz) not in state_candidates:
+            state_candidates.append((nx + 1, ny, nz))
+        if (nx, ny + 1, nz) not in old_states and (nx, ny + 1, nz) not in state_candidates:
+            state_candidates.append((nx, ny + 1, nz))
+        if (nx, ny, nz + 1) not in old_states and (nx, ny, nz + 1) not in state_candidates:
+            state_candidates.append((nx, ny, nz + 1))
+        # make sure that the lowest energy state is at position 0
+        state_candidates.sort(key = lambda n: pib_energy(*n))
+
+    return density
+    
+
 energy = np.inf
 energy_tolerance = 1e-3 # or whatever
 gradient_scale = 1
@@ -139,12 +187,10 @@ if __name__ == "__main__":
     box_dims = np.array([16.0, 8.0, 2.0]) # bohr
     points_per_angstrom = 5
     electron_count = 14
-    density = np.ones((points_per_angstrom*box_dims).astype(np.int_)) # future-proofing would do some checks here
-    # fill in density with appropriate guess (uniform?)
-    box_volume = np.prod(box_dims)
-    density *= electron_count/box_volume
-
     dx = 1/points_per_angstrom
+    box_shape = (box_dims*points_per_angstrom).astype(np.int_)
+
+    density = _initial_density(box_shape, dx, electron_count)
 
     for i in range(20):
         print(f"Beginning iteration {i}")
