@@ -156,8 +156,6 @@ def _initial_density(shape: tuple[int, int, int], dx: float, electron_count: int
 
         nx, ny, nz = state_candidates.pop(0)
         old_states.add((nx, ny, nz))
-        print(f"{nx}, {ny}, {nz}; {pib_energy(nx, ny, nz)}")
-        print(old_states)
         x_axis = np.sin(nx*np.pi*x_centers/Lx)**2
         y_axis = np.sin(ny*np.pi*y_centers/Ly)**2
         z_axis = np.sin(nz*np.pi*z_centers/Lz)**2
