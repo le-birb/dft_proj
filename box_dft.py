@@ -192,7 +192,7 @@ def _initial_density(shape: tuple[int, int, int], dx: float, electron_count: int
 
 energy = np.inf
 energy_tolerance = 1e-3 # or whatever
-gradient_scale = 1
+gradient_scale = .1
 
 new_density_frac = .1
 
