@@ -136,7 +136,7 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     d_eps_c_drho = _a*_b*_inv_rs_factor**3/3 * inv_rs**-2 * (1 + 2*inv_rs)/(1 + _b*inv_rs*(1 + inv_rs))
     return x_gradient + eps_c + density * d_eps_c_drho
 
-def xc_lagrange_gradient(density: np.ndarray, dx: float) -> float:
+def xc_lagrange_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     xclg_dens = density**(-1/3)
     inv_rs = density**(1/3) * _inv_rs_factor
     exchange_term = _lda_factor * xclg_dens * (4/9)
