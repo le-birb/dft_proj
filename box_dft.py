@@ -66,6 +66,10 @@ def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     vw_term = _grad_squared(density, dx) / (8 * density**2) - _laplacian(density, dx) / (4 * density)
     return tf_term # + vw_term
 
+def ke_lagrange_gradient(density: np.ndarray, dx: float) -> np.ndarray:
+    klg_dens = density**(-1/3)
+    return _tf_factor * (10/9) * klg_dens
+
 # this should always be the same for a given calculation
 @lru_cache
 def _delta_r_base(shape: tuple[int, ...],  dx: float) -> np.ndarray:
@@ -109,6 +113,9 @@ def hartree_gradient(density: np.ndarray, dx: float) -> np.ndarray:
         ri = it.multi_index
         gradient[ri] = _integrate(density * _inv_delta_r(density.shape, ri, dx), dx)
     return .5 * gradient
+#Should be zero for this system
+def hartree_lagrange_gradient(density: np.ndarray, dx: float) -> float:
+    return 0
 
 _lda_factor = -3/4*(3/np.pi)**(1/3)
 _a0 = .529 # angstroms
@@ -129,6 +136,9 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     d_eps_c_drho = _a*_b*_inv_rs_factor**3/3 * inv_rs**-2 * (1 + 2*inv_rs)/(1 + _b*inv_rs*(1 + inv_rs))
     return x_gradient + eps_c + density * d_eps_c_drho
 
+def xc_lagrange_gradient(density: np.ndarray, dx: float) -> float:
+    xclg_dens = density**(-1/3)
+    return _lda_factor * xclg_dens * (4/9)
 
 def _initial_density(shape: tuple[int, int, int], dx: float, electron_count: int) -> np.ndarray:
     # noninteracting pib states are sqrt(2/Lx) sin(n pi x / Lx) in each direction
