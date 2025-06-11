@@ -140,7 +140,7 @@ def xc_lagrange_gradient(density: np.ndarray, dx: float) -> float:
     xclg_dens = density**(-1/3)
     inv_rs = density**(1/3) * _inv_rs_factor
     exchange_term = _lda_factor * xclg_dens * (4/9)
-    coorelation_term = (-1*_a*_b*(_inv_rs_factor)**(6)) / (9*(inv_rs**5)) * ((2 + ((2+3*_b)*inv_rs) + (8*_b*(inv_rs**2)) + 6*_b*inv_rs**3) / (1+_b*inv_rs+_b*inv_rs**2)**2)
+    coorelation_term = -_a*_b*_inv_rs_factor**6 / (9*inv_rs**5) * (2 + (2 + 3*_b)*inv_rs + 8*_b*inv_rs**2 + 6*_b*inv_rs**3) / (1+_b*inv_rs+_b*inv_rs**2)**2
     return exchange_term + coorelation_term
 
 
