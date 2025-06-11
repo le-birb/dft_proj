@@ -117,7 +117,7 @@ _b = 20.4562557
 _inv_rs_factor = (4*np.pi/3)**(1/3) / _a0
 
 def xc_energy(density: np.ndarray, dx: float) -> float:
-    inv_rs = density**2 * _inv_rs_factor
+    inv_rs = density**(1/3) * _inv_rs_factor
     integrand = _lda_factor * density**(4/3) + density * _a * np.log(1 + _b * (inv_rs + inv_rs**2))
     return _integrate(integrand, dx)
 
