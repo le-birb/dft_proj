@@ -118,7 +118,7 @@ def hartree_lagrange_gradient(density: np.ndarray, dx: float) -> float:
     return 0
 
 _lda_factor = -3/4*(3/np.pi)**(1/3)
-_a0 = .529 # angstroms
+_a0 = 1 # angstroms
 _a = (np.log(2) - 1)/(2*np.pi**2)
 _b = 20.4562557
 _inv_rs_factor = (4*np.pi/3)**(1/3) / _a0
@@ -138,7 +138,12 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
 
 def xc_lagrange_gradient(density: np.ndarray, dx: float) -> float:
     xclg_dens = density**(-1/3)
-    return _lda_factor * xclg_dens * (4/9)
+    inv_rs = density**(1/3) * _inv_rs_factor
+    exchange_term = _lda_factor * xclg_dens * (4/9)
+    coorelation_term = (-1*_a*_b*(_inv_rs_factor)**(6)) / (9*(inv_rs**5)) * ((2 + ((2+3*_b)*inv_rs) + (8*_b*(inv_rs**2)) + 6*_b*inv_rs**3) / (1+b*inv_rs+b*inv_rs**2)**2)
+    return exchange_term + coorelation_term
+
+
 
 def _initial_density(shape: tuple[int, int, int], dx: float, electron_count: int) -> np.ndarray:
     # noninteracting pib states are sqrt(2/Lx) sin(n pi x / Lx) in each direction
