@@ -190,6 +190,18 @@ def _initial_density(shape: tuple[int, int, int], dx: float, electron_count: int
     return density
     
 
+def _mask_gradient(grad: np.ndarray) -> np.ndarray:
+    "Removes very large values from a gradient"
+    mask = np.abs(grad) < 1
+    return mask * grad
+
+
+def _mask_density(density: np.ndarray, tolerance: float = 1e-6) -> np.ndarray:
+    "Sets small or negativ evalues to 0"
+    mask = density >= tolerance # sets 0s where density < tolerance
+                                # not taking the absolute value is deliberate
+    return mask * density
+
 energy = np.inf
 energy_tolerance = 1e-3 # or whatever
 gradient_scale = .1
