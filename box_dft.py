@@ -66,7 +66,7 @@ def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     vw_term = _grad_squared(density, dx) / (8 * density**2) - _laplacian(density, dx) / (4 * density)
     return tf_term # + vw_term
 
-def ke_lagrange_gradient(density: np.ndarray, dx: float) -> np.ndarray:
+def d_ke_gradient_drho(density: np.ndarray, dx: float) -> np.ndarray:
     klg_dens = density**(-1/3)
     return _tf_factor * (10/9) * klg_dens
 
@@ -114,7 +114,7 @@ def hartree_gradient(density: np.ndarray, dx: float) -> np.ndarray:
         gradient[ri] = _integrate(density * _inv_delta_r(density.shape, ri, dx), dx)
     return .5 * gradient
 #Should be zero for this system
-def hartree_lagrange_gradient(density: np.ndarray, dx: float) -> float:
+def d_hartree_gradient_drho(density: np.ndarray, dx: float) -> float:
     return 0
 
 _lda_factor = -3/4*(3/np.pi)**(1/3)
@@ -136,7 +136,7 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     d_eps_c_drho = _a*_b*_inv_rs_factor**3/3 * inv_rs**-2 * (1 + 2*inv_rs)/(1 + _b*inv_rs*(1 + inv_rs))
     return x_gradient + eps_c + density * d_eps_c_drho
 
-def xc_lagrange_gradient(density: np.ndarray, dx: float) -> np.ndarray:
+def d_xc__gradient_drho(density: np.ndarray, dx: float) -> np.ndarray:
     xclg_dens = density**(-1/3)
     inv_rs = density**(1/3) * _inv_rs_factor
     exchange_term = _lda_factor * xclg_dens * (4/9)
