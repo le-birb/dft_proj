@@ -58,12 +58,12 @@ _vw_factor = 1/8
 
 def kinetic_energy(density: np.ndarray, dx: float) -> float:
     TF = np.power(density, 5/3)
-    VW = _grad_squared(density, dx)/density
+    # VW = _grad_squared(density, dx)/density
     return _tf_factor * _integrate(TF, dx) # + _vw_factor * _integrate(VW, dx)
 
 def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     tf_term = 5/3 * density**(2/3)
-    vw_term = _grad_squared(density, dx) / (8 * density**2) - _laplacian(density, dx) / (4 * density)
+    # vw_term = _grad_squared(density, dx) / (8 * density**2) - _laplacian(density, dx) / (4 * density)
     return tf_term # + vw_term
 
 def d_ke_gradient_drho(density: np.ndarray, dx: float) -> np.ndarray:
@@ -203,36 +203,65 @@ def _mask_density(density: np.ndarray, tolerance: float = 1e-6) -> np.ndarray:
     return mask * density
 
 energy = np.inf
-energy_tolerance = 1e-3 # or whatever
-gradient_scale = .1
+energy_tolerance = 1e-6 # or whatever
+gradient_scale = .01
+lagrange_multiplier = .1
 
 new_density_frac = .1
 
 if __name__ == "__main__":
-    box_dims = np.array([16.0, 8.0, 2.0]) # bohr
+    box_dims = np.array([16.0, 8.0, 3.0]) # bohr
     points_per_angstrom = 5
     electron_count = 14
     dx = 1/points_per_angstrom
     box_shape = (box_dims*points_per_angstrom).astype(np.int_)
 
     density = _initial_density(box_shape, dx, electron_count)
+    print(f"Min density: {np.min(density)}")
+    print(f"Electron count: {_integrate(density, dx)}")
+
+    def delta_n(density: np.ndarray) -> float:
+        # maybe dx should be a parameter but whatever
+        return _integrate(density, dx) - electron_count
 
     for i in range(20):
         print(f"Beginning iteration {i}")
         previous_energy = energy
         # calculate energy of configuration
         energy = kinetic_energy(density, dx) + hartree_energy(density, dx) + xc_energy(density, dx)
-        print(energy)
+        print(f"Current energy: {energy}")
+        print(f"Energy change: {energy - previous_energy}")
 
-        # check convergence
         if abs(previous_energy - energy) < energy_tolerance:
             break # converged
 
-        # calculate gradient
-        energy_gradient = ke_gradient(density, dx) + hartree_gradient(density, dx) + xc_gradient(density, dx)
+        # to maintain the constraiont that the density must integrate to electron_count, we'll use a lagrange multiplier
+        # the constraint function will be delta_n = _integrate(density, dx) - electron_count
+        # so the Lagrangian will end up being E - l*delta_n
+        # the optimum occurs where L is stationary, i.e. its gradient has magnitude zero
+        # so we'll do gradient descent on (grad L)**2, also denoted h
+        kegrad = ke_gradient(density, dx)
+        hgrad = hartree_gradient(density, dx)
+        xcgrad = xc_gradient(density, dx)
+        energy_gradient = kegrad + hgrad + xcgrad
+        d_energy_gradient_drho = d_ke_gradient_drho(density, dx) + d_xc__gradient_drho(density, dx) # the Hartree term is 0
 
-        # nudge in that direction
-        new_density = density - energy_gradient * gradient_scale
+        dL_drho = energy_gradient + lagrange_multiplier
+
+        dh_drho = 2 * dL_drho * d_energy_gradient_drho + 2 * delta_n(density)
+        dh_dl   = 2 * _integrate(dL_drho, dx)
+
+        new_density = density - _mask_gradient(dh_drho) * gradient_scale
+        # density mixing helps solutions be more stable
         density = density*(1-new_density_frac) + new_density*new_density_frac
+        density = _mask_density(density)
+
+        print(f"Min density: {np.min(density)}")
+        print(f"Electron count: {_integrate(density, dx)}")
+        print(f"Multiplier: {lagrange_multiplier}")
+        print("")
+
+        new_l = lagrange_multiplier - dh_dl * gradient_scale
+        lagrange_multiplier = lagrange_multiplier*(1-new_density_frac) + new_l*new_density_frac
     
     print(f"final result:{energy}")
