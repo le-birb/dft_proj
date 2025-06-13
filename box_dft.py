@@ -58,13 +58,11 @@ _vw_factor = 1/8
 
 def kinetic_energy(density: np.ndarray, dx: float) -> float:
     TF = np.power(density, 5/3)
-    # VW = _grad_squared(density, dx)/density
-    return _tf_factor * _integrate(TF, dx) # + _vw_factor * _integrate(VW, dx)
+    return _tf_factor * _integrate(TF, dx) 
 
 def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     tf_term = 5/3 * density**(2/3)
-    # vw_term = _grad_squared(density, dx) / (8 * density**2) - _laplacian(density, dx) / (4 * density)
-    return tf_term # + vw_term
+    return tf_term
 
 def d_ke_gradient_drho(density: np.ndarray, dx: float) -> np.ndarray:
     klg_dens = density**(-1/3)
@@ -123,10 +121,14 @@ _a = (np.log(2) - 1)/(2*np.pi**2)
 _b = 20.4562557
 _inv_rs_factor = (4*np.pi/3)**(1/3) / _a0
 
-def xc_energy(density: np.ndarray, dx: float) -> float:
+def correlation_energy(density: np.ndarray, dx: float) -> float:
     inv_rs = density**(1/3) * _inv_rs_factor
-    integrand = _lda_factor * density**(4/3) + density * _a * np.log(1 + _b * (inv_rs + inv_rs**2))
+    integrand = density * _a * np.log(1 + _b * (inv_rs + inv_rs**2))
     return _integrate(integrand, dx)
+
+def exchange_energy(density: np.ndarray, dx: float) -> float:
+    return _integrate(_lda_factor * density**(4/3), dx)
+
 
 def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     cbrt_dens = density**(1/3)
