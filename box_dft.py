@@ -1,6 +1,9 @@
 
 from functools import lru_cache
+import sys
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 def _integrate(values: np.ndarray, dx: float, dy: float = None, dz: float = None) -> float:
     if dy is None:
@@ -96,7 +99,7 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
 
 energy = np.inf
 energy_tolerance = 1e-4 # or whatever
-gradient_scale = .01
+gradient_scale = .02
 
 new_density_frac = .3
 
@@ -160,7 +163,7 @@ if __name__ == "__main__":
 
 
     np.set_printoptions(threshold = sys.maxsize, linewidth = sys.maxsize, precision = None)
-    with open("density.txt", 'r') as file:
+    with open("density.txt", 'w') as file:
         file.write(np.array_repr(density))
 
     density_cross_section_x = np.sum(density, axis = (1, 2))
