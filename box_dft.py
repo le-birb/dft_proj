@@ -211,12 +211,15 @@ new_density_frac = .1
 
 if __name__ == "__main__":
     box_dims = np.array([16.0, 8.0, 3.0]) # bohr
-    points_per_angstrom = 5
+    box_volume = np.prod(box_dims)
+    points_per_bohr = 5
     electron_count = 14
-    dx = 1/points_per_angstrom
-    box_shape = (box_dims*points_per_angstrom).astype(np.int_)
+    dx = 1/points_per_bohr
+    box_shape = (box_dims*points_per_bohr).astype(np.int_)
 
-    density = _initial_density(box_shape, dx, electron_count)
+    # density = _initial_density(box_shape, dx, electron_count)
+    density = np.ones(box_shape) * electron_count / box_volume
+
     print(f"Min density: {np.min(density)}")
     print(f"Electron count: {_integrate(density, dx)}")
 
