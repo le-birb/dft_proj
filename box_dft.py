@@ -12,49 +12,7 @@ def _integrate(values: np.ndarray, dx: float, dy: float = None, dz: float = None
     # but so does performance, slightly
     return np.sum(values) * dV
 
-def _grad_squared(function: np.ndarray, dx: float, dy: float = None, dz: float = None) -> np.ndarray:
-    '''returns (∇f)^2, using a symmetric difference quotient
-    dx should be the spacing between adjacent grid points'''
-    if dy is None:
-        dy = dx
-    if dz is None:
-        dz = dx
-    
-    grad_squared = np.zeros_like(function)
-    it = np.nditer(function, flags=['multi_index'])
-    # a symmetric differnence doesn't use the value at the point, so we don't actually need to keep it
-    for _ in it:
-        ix, iy, iz = it.multi_index
-        lx, ly, lz = function.shape
-        # i + 1 needs to be wrapped around explicitly, i- 1 does not
-        gx = (function[(ix + 1) % lx, iy, iz] - function[ix - 1, iy, iz]) / (2*dx)
-        gy = (function[ix, (iy + 1) % ly, iz] - function[ix, iy - 1, iz]) / (2*dy)
-        gz = (function[ix, iy, (iz + 1) % lz] - function[ix, iy, iz - 1]) / (2*dz)
-        grad_squared[ix, iy, iz] = gx**2 + gy**2 + gz**2
-    return grad_squared	
-
-def _laplacian(function: np.ndarray, dx: float, dy: float = None, dz: float = None) -> np.ndarray:
-    # if dy is None:
-    #     dy = dx
-    # if dz is None:
-    #     dz = dx
-
-    laplacian = np.zeros_like(function)
-    it = np.nditer(function, flags=['multi_index'])
-    for value in it:
-        ix, iy, iz = it.multi_index
-        lx, ly, lz = function.shape
-        laplacian[ix, iy, iz] = \
-            (
-                function[(ix + 1) % lx, iy, iz] + function[ix - 1, iy, iz] + \
-                function[ix, (iy + 1) % ly, iz] + function[ix, iy - 1, iz] + \
-                function[ix, iy, (iz + 1) % lz] + function[ix, iy, iz - 1] - \
-                6*value
-            ) / dx**2 # TODO: think about adding support for different dx, dy, dz; think about it real hard
-    return laplacian
-
 _tf_factor = 3/10 * (3*np.pi**2)**(2/3)
-_vw_factor = 1/8
 
 def kinetic_energy(density: np.ndarray, dx: float) -> float:
     TF = np.power(density, 5/3)
@@ -63,10 +21,6 @@ def kinetic_energy(density: np.ndarray, dx: float) -> float:
 def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     tf_term = 5/3 * density**(2/3)
     return tf_term
-
-def d_ke_gradient_drho(density: np.ndarray, dx: float) -> np.ndarray:
-    klg_dens = density**(-1/3)
-    return _tf_factor * (10/9) * klg_dens
 
 # this should always be the same for a given calculation
 @lru_cache
@@ -111,9 +65,6 @@ def hartree_gradient(density: np.ndarray, dx: float) -> np.ndarray:
         ri = it.multi_index
         gradient[ri] = _integrate(density * _inv_delta_r(density.shape, ri, dx), dx)
     return .5 * gradient
-#Should be zero for this system
-def d_hartree_gradient_drho(density: np.ndarray, dx: float) -> float:
-    return 0
 
 _lda_factor = -3/4*(3/np.pi)**(1/3)
 _a0 = 1 # angstroms
@@ -137,72 +88,6 @@ def xc_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     eps_c = _a * np.log(1 + _b * (inv_rs + inv_rs**2))
     d_eps_c_drho = _a*_b*_inv_rs_factor**3/3 * inv_rs**-2 * (1 + 2*inv_rs)/(1 + _b*inv_rs*(1 + inv_rs))
     return x_gradient + eps_c + density * d_eps_c_drho
-
-def d_xc__gradient_drho(density: np.ndarray, dx: float) -> np.ndarray:
-    xclg_dens = density**(-1/3)
-    inv_rs = density**(1/3) * _inv_rs_factor
-    exchange_term = _lda_factor * xclg_dens * (4/9)
-    coorelation_term = -_a*_b*_inv_rs_factor**6 / (9*inv_rs**5) * (2 + (2 + 3*_b)*inv_rs + 8*_b*inv_rs**2 + 6*_b*inv_rs**3) / (1+_b*inv_rs+_b*inv_rs**2)**2
-    return exchange_term + coorelation_term
-
-
-
-def _initial_density(shape: tuple[int, int, int], dx: float, electron_count: int) -> np.ndarray:
-    # noninteracting pib states are sqrt(2/Lx) sin(n pi x / Lx) in each direction
-    # shift everything over by dx/2 to be in the centers of the grid cells instead of the corners
-    x_centers = np.arange(shape[0]) * dx + dx/2
-    y_centers = np.arange(shape[1]) * dx + dx/2
-    z_centers = np.arange(shape[2]) * dx + dx/2
-    Lx = shape[0] * dx
-    Ly = shape[1] * dx
-    Lz = shape[2] * dx
-
-    def pib_energy(nx, ny, nz):
-        return (nx/Lx)**2 + (ny/Ly)**2 + (nz/Lz)**2
-
-    state_candidates = [(1, 1, 1)]
-    old_states = set()
-    density = np.zeros(shape)
-    electrons_left = electron_count
-    # the wavefunction norm factor is the sqrt of this, but we want a density
-    normalization_factor = 8/(Lx*Ly*Lz)
-
-    while electrons_left > 0:
-        electrons_in_next_state = min(electrons_left, 2)
-        electrons_left -= electrons_in_next_state
-
-        nx, ny, nz = state_candidates.pop(0)
-        old_states.add((nx, ny, nz))
-        x_axis = np.sin(nx*np.pi*x_centers/Lx)**2
-        y_axis = np.sin(ny*np.pi*y_centers/Ly)**2
-        z_axis = np.sin(nz*np.pi*z_centers/Lz)**2
-        
-        density += electrons_in_next_state * normalization_factor * np.einsum('i,j,k', x_axis, y_axis, z_axis) # this einsum builds a 3d grid out of the axes in the way we want
-        
-        # the next highest energy state is either already present in the list, or is one of these
-        if (nx + 1, ny, nz) not in old_states and (nx + 1, ny, nz) not in state_candidates:
-            state_candidates.append((nx + 1, ny, nz))
-        if (nx, ny + 1, nz) not in old_states and (nx, ny + 1, nz) not in state_candidates:
-            state_candidates.append((nx, ny + 1, nz))
-        if (nx, ny, nz + 1) not in old_states and (nx, ny, nz + 1) not in state_candidates:
-            state_candidates.append((nx, ny, nz + 1))
-        # make sure that the lowest energy state is at position 0
-        state_candidates.sort(key = lambda n: pib_energy(*n))
-
-    return density
-    
-
-def _mask_gradient(grad: np.ndarray) -> np.ndarray:
-    "Removes very large values from a gradient"
-    mask = np.abs(grad) < 1
-    return mask * grad
-
-
-def _mask_density(density: np.ndarray, tolerance: float = 1e-6) -> np.ndarray:
-    "Sets small or negativ evalues to 0"
-    mask = density >= tolerance # sets 0s where density < tolerance
-                                # not taking the absolute value is deliberate
-    return mask * density
 
 energy = np.inf
 energy_tolerance = 1e-4 # or whatever
@@ -248,11 +133,6 @@ if __name__ == "__main__":
         if abs(previous_energy - energy) < energy_tolerance:
             break # converged
 
-        # to maintain the constraiont that the density must integrate to electron_count, we'll use a lagrange multiplier
-        # the constraint function will be delta_n = _integrate(density, dx) - electron_count
-        # so the Lagrangian will end up being E - l*delta_n
-        # the optimum occurs where L is stationary, i.e. its gradient has magnitude zero
-        # so we'll do gradient descent on (grad L)**2, also denoted h
         kegrad = ke_gradient(density, dx)
         hgrad = hartree_gradient(density, dx)
         xcgrad = xc_gradient(density, dx)
