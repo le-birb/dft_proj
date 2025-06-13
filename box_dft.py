@@ -157,3 +157,17 @@ if __name__ == "__main__":
         print("")
     
     print(f"final result: {energy}")
+
+
+    np.set_printoptions(threshold = sys.maxsize, linewidth = sys.maxsize, precision = None)
+    with open("density.txt", 'r') as file:
+        file.write(np.array_repr(density))
+
+    density_cross_section_x = np.sum(density, axis = (1, 2))
+    positions = np.linspace(0, box_dims[0], num = box_shape[0]) + dx/2
+
+    fig, axes = plt.subplots(1, 1)
+    axes.plot(positions, density_cross_section_x, color = 'black', linewidth = 3)
+    plt.savefig('density_x.png')
+    plt.savefig('density.pdf')
+    plt.show()
