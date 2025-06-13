@@ -224,7 +224,7 @@ if __name__ == "__main__":
         # maybe dx should be a parameter but whatever
         return _integrate(density, dx) - electron_count
 
-    for i in range(20):
+    for i in range(200):
         print(f"Beginning iteration {i}")
         previous_energy = energy
         # calculate energy of configuration
