@@ -228,9 +228,18 @@ if __name__ == "__main__":
         print(f"Beginning iteration {i}")
         previous_energy = energy
         # calculate energy of configuration
-        energy = kinetic_energy(density, dx) + hartree_energy(density, dx) + xc_energy(density, dx)
+        kinetic  = kinetic_energy(density, dx)
+        hartree = hartree_energy(density, dx)
+        exchange = exchange_energy(density, dx)
+        correlation = correlation_energy(density, dx)
+        energy = kinetic + hartree + exchange + correlation
         print(f"Current energy: {energy}")
+        print(f"Hartree energy: {hartree}")
+        print(f"Kinetic energy: {kinetic}")
+        print(f"Exchange energy: {exchange}")
+        print(f"Correlation energy: {correlation}")
         print(f"Energy change: {energy - previous_energy}")
+        print("")
 
         if abs(previous_energy - energy) < energy_tolerance:
             break # converged
@@ -260,6 +269,8 @@ if __name__ == "__main__":
         print(f"Electron count: {_integrate(density, dx)}")
         print(f"Multiplier: {lagrange_multiplier}")
         print("")
+    
+    print(f"final result: {energy}")
 
         new_l = lagrange_multiplier - dh_dl * gradient_scale
         lagrange_multiplier = lagrange_multiplier*(1-new_density_frac) + new_l*new_density_frac
