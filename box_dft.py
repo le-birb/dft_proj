@@ -15,8 +15,7 @@ def _integrate(values: np.ndarray, dx: float, dy: float = None, dz: float = None
 _tf_factor = 3/10 * (3*np.pi**2)**(2/3)
 
 def kinetic_energy(density: np.ndarray, dx: float) -> float:
-    TF = np.power(density, 5/3)
-    return _tf_factor * _integrate(TF, dx) 
+    return _tf_factor * _integrate(density**(5/3), dx)
 
 def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     tf_term = 5/3 * density**(2/3) * _tf_factor
