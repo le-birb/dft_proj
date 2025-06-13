@@ -166,7 +166,7 @@ if __name__ == "__main__":
     with open("density.txt", 'w') as file:
         file.write(np.array_repr(density))
 
-    density_cross_section_x = np.sum(density, axis = (1, 2))
+    density_cross_section_x = np.sum(density, axis = (1, 2)) * dx * dx
     positions = np.linspace(0, box_dims[0], num = box_shape[0]) + dx/2
 
     fig, axes = plt.subplots(1, 1)
