@@ -25,6 +25,7 @@ def ke_gradient(density: np.ndarray, dx: float) -> np.ndarray:
 # this should always be the same for a given calculation
 @lru_cache
 def _delta_r_base(shape: tuple[int, ...],  dx: float) -> np.ndarray:
+    "Returns an array of 1/r', with 0 at (0, 0, 0)" 
     grid = np.zeros(shape)
     it = np.nditer(grid, flags=['multi_index'])
     for _ in it:
@@ -33,20 +34,25 @@ def _delta_r_base(shape: tuple[int, ...],  dx: float) -> np.ndarray:
     grid[0,0,0] = 0
     return grid / dx
 
-def _inv_delta_r(shape: tuple[int, ...], ri: tuple[int, int, int], dx: float) -> np.ndarray:
+def _inv_delta_r(shape: tuple[int, ...], r_index: tuple[int, int, int], dx: float) -> np.ndarray:
+    """
+    Returns an array of values of 1/abs(r - r'), as a function of r', given a particular r
+    At r'=r, it puts 0
+    """
+    # we take an array with r at (0, 0, 0), and construct a new array by copying relevant pieces into their proper places
     base = _delta_r_base(shape, dx)
-    xi, yi, zi = ri
-    lx, ly, lz = shape
+    xi, yi, zi = r_index
+    x_end, y_end, z_end = shape
     translated_grid = np.zeros_like(base)
     # the precalcualted distances may simply be copied into place
-    translated_grid[xi:, yi:, zi:] = base[:lx-xi,  :ly-yi,  :lz-zi ]
-    translated_grid[:xi, yi:, zi:] = base[xi:0:-1, :ly-yi,  :lz-zi ]
-    translated_grid[xi:, :yi, zi:] = base[:lx-xi,  yi:0:-1, :lz-zi ]
-    translated_grid[:xi, :yi, zi:] = base[xi:0:-1, yi:0:-1, :lz-zi ]
-    translated_grid[xi:, yi:, :zi] = base[:lx-xi,  :ly-yi,  zi:0:-1]
-    translated_grid[:xi, yi:, :zi] = base[xi:0:-1, :ly-yi,  zi:0:-1]
-    translated_grid[xi:, :yi, :zi] = base[:lx-xi,  yi:0:-1, zi:0:-1]
-    translated_grid[:xi, :yi, :zi] = base[xi:0:-1, yi:0:-1, zi:0:-1]
+    translated_grid[xi:, yi:, zi:] = base[:x_end-xi, :y_end-yi, :z_end-zi]
+    translated_grid[:xi, yi:, zi:] = base[xi:0:-1,   :y_end-yi, :z_end-zi]
+    translated_grid[xi:, :yi, zi:] = base[:x_end-xi, yi:0:-1,   :z_end-zi]
+    translated_grid[:xi, :yi, zi:] = base[xi:0:-1,   yi:0:-1,   :z_end-zi]
+    translated_grid[xi:, yi:, :zi] = base[:x_end-xi, :y_end-yi, zi:0:-1  ]
+    translated_grid[:xi, yi:, :zi] = base[xi:0:-1,   :y_end-yi, zi:0:-1  ]
+    translated_grid[xi:, :yi, :zi] = base[:x_end-xi, yi:0:-1,   zi:0:-1  ]
+    translated_grid[:xi, :yi, :zi] = base[xi:0:-1,   yi:0:-1,   zi:0:-1  ]
 
     return translated_grid
 
@@ -62,8 +68,8 @@ def hartree_gradient(density: np.ndarray, dx: float) -> np.ndarray:
     gradient = np.zeros_like(density)
     it = np.nditer(density, flags=['multi_index'])
     for _ in it:
-        ri = it.multi_index
-        gradient[ri] = _integrate(density * _inv_delta_r(density.shape, ri, dx), dx)
+        r_index = it.multi_index
+        gradient[r_index] = _integrate(density * _inv_delta_r(density.shape, r_index, dx), dx)
     return .5 * gradient
 
 _lda_factor = -3/4*(3/np.pi)**(1/3)
