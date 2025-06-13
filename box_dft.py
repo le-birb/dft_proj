@@ -203,11 +203,10 @@ def _mask_density(density: np.ndarray, tolerance: float = 1e-6) -> np.ndarray:
     return mask * density
 
 energy = np.inf
-energy_tolerance = 1e-6 # or whatever
+energy_tolerance = 1e-4 # or whatever
 gradient_scale = .01
-lagrange_multiplier = .1
 
-new_density_frac = .1
+new_density_frac = .3
 
 if __name__ == "__main__":
     box_dims = np.array([16.0, 8.0, 3.0]) # bohr
@@ -256,17 +255,14 @@ if __name__ == "__main__":
         hgrad = hartree_gradient(density, dx)
         xcgrad = xc_gradient(density, dx)
         energy_gradient = kegrad + hgrad + xcgrad
-        d_energy_gradient_drho = d_ke_gradient_drho(density, dx) + d_xc__gradient_drho(density, dx) # the Hartree term is 0
 
-        dL_drho = energy_gradient + lagrange_multiplier
-
-        dh_drho = 2 * dL_drho * d_energy_gradient_drho + 2 * delta_n(density)
-        dh_dl   = 2 * _integrate(dL_drho, dx)
-
-        new_density = density - _mask_gradient(dh_drho) * gradient_scale
+        # this term is to maintain the constraint of constant electron number
+        # essentially, we compensate for the change in electron number due to the gradient step
+        # by adding in a constant density to bring the totoal cound back in line
+        lagrange_multiplier = _integrate(energy_gradient, dx) * gradient_scale / box_volume
+        new_density = density - energy_gradient * gradient_scale + lagrange_multiplier
         # density mixing helps solutions be more stable
         density = density*(1-new_density_frac) + new_density*new_density_frac
-        density = _mask_density(density)
 
         print(f"Min density: {np.min(density)}")
         print(f"Electron count: {_integrate(density, dx)}")
@@ -274,8 +270,3 @@ if __name__ == "__main__":
         print("")
     
     print(f"final result: {energy}")
-
-        new_l = lagrange_multiplier - dh_dl * gradient_scale
-        lagrange_multiplier = lagrange_multiplier*(1-new_density_frac) + new_l*new_density_frac
-    
-    print(f"final result:{energy}")
