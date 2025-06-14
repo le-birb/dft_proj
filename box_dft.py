@@ -104,7 +104,7 @@ gradient_scale = .02
 new_density_frac = .3
 
 if __name__ == "__main__":
-    box_dims = np.array([16.0, 8.0, 3.0]) # bohr
+    box_dims = np.array([16.0, 8.0, 2.0]) # bohr
     box_volume = np.prod(box_dims)
     points_per_bohr = 5
     electron_count = 14
@@ -156,7 +156,7 @@ if __name__ == "__main__":
 
         print(f"Min density: {np.min(density)}")
         print(f"Electron count: {_integrate(density, dx)}")
-        print(f"Multiplier: {lagrange_multiplier}")
+        print(f"Lagrange Multiplier: {lagrange_multiplier}")
         print("")
     
     print(f"final result: {energy}")
@@ -171,6 +171,9 @@ if __name__ == "__main__":
 
     fig, axes = plt.subplots(1, 1)
     axes.plot(positions, density_cross_section_x, color = 'black', linewidth = 3)
+    plt.ylabel("Density")
+    plt.xlabel("Cross-Sectional Position along x-axis")
+    plt.title("Ground State Density of Anthracene")
     plt.savefig('density_x.png')
     plt.savefig('density.pdf')
     plt.show()
